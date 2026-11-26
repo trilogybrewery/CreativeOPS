@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import fs from 'node:fs';
 import { db, hashPassword, verifyPassword, Row } from '@/lib/db';
-import { createSession, destroySession, loginBlocked, loginFailed, loginOk, requireUser, User } from '@/lib/auth';
+import { createSession, destroySession, LOGIN_REQUIRED, loginBlocked, loginFailed, loginOk, requireUser, setActingUser, User } from '@/lib/auth';
 import * as T from '@/lib/tickets';
 import { DIVISIONS, ROLES } from '@/lib/config';
 import { resolveStored } from '@/lib/files';
@@ -27,6 +27,13 @@ export async function loginAction(fd: FormData) {
   }
   loginOk(username);
   await createSession(u.id);
+  redirect('/board');
+}
+export async function switchUserAction(fd: FormData) {
+  if (LOGIN_REQUIRED) redirect('/login');
+  const username = str(fd, 'username').toLowerCase();
+  const u = db().prepare('SELECT id FROM users WHERE username = ? AND active = 1').get(username) as Row | undefined;
+  if (u) await setActingUser(username);
   redirect('/board');
 }
 export async function logoutAction() {

@@ -6,7 +6,11 @@ import crypto from 'node:crypto';
 
 export type Row = Record<string, any>;
 
-export const DATA_DIR = process.env.DATA_DIR || path.join(/*turbopackIgnore: true*/ process.cwd(), 'data');
+// Di Vercel disk aplikasi read-only, jadi data ditaruh di /tmp. Isinya TIDAK permanen:
+// bisa hilang kapan saja dan tiap instance punya salinan sendiri. Hanya untuk demo.
+export const DATA_DIR =
+  process.env.DATA_DIR ||
+  (process.env.VERCEL ? '/tmp/creative-ops' : path.join(/*turbopackIgnore: true*/ process.cwd(), 'data'));
 export const FILES_DIR = path.join(/*turbopackIgnore: true*/ DATA_DIR, 'files');
 
 const g = globalThis as unknown as { __coDb?: Database.Database };

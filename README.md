@@ -34,6 +34,12 @@ npm run start
 
 Buka http://localhost:3000. Untuk mode pengembangan pakai `npm run dev`.
 
+## Mode tanpa login (sementara)
+
+Saat ini login dimatikan. Semua orang langsung masuk sebagai Admin, dan bisa pindah ke akun lain (CD, AD, PIC, requester) lewat tombol **Ganti akun** tanpa password. Untuk menyalakan login lagi, isi variabel `LOGIN_REQUIRED=true` lalu jalankan ulang aplikasi.
+
+Di Vercel, database disimpan di `/tmp` dan **tidak permanen**: ticket, upload, dan perubahan bisa hilang kapan saja, dan tiap instance server bisa punya data berbeda. Pakai Vercel hanya untuk melihat-lihat. Untuk dipakai tim, jalankan di NAS.
+
 ## Akun awal
 
 Dibuat otomatis saat database masih kosong. Password awal semuanya `trilogy-2026`, kecuali kalau dijalankan lewat `docker-compose.yml`: di sana password awalnya nilai `INITIAL_PASSWORD` di file itu (bisa diganti lewat variabel `INITIAL_PASSWORD` sebelum pertama kali dijalankan). Tiap akun wajib ganti password saat login pertama.

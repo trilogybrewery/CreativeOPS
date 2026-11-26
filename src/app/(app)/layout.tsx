@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { changePasswordAction, logoutAction } from '../actions';
-import { requireUser } from '@/lib/auth';
+import { LOGIN_REQUIRED, requireUser } from '@/lib/auth';
 import { db, Row } from '@/lib/db';
 import { canCreate, seesReports } from '@/lib/tickets';
 import { APP_NAME, ROLES } from '@/lib/config';
@@ -71,7 +71,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <span>{ROLES[u.role]}{u.division ? ` · ${u.division}` : ''}</span>
           </div>
           <form action={logoutAction}>
-            <button className="btn sm" title="Keluar">Keluar</button>
+            <button className="btn sm" title={LOGIN_REQUIRED ? 'Keluar' : 'Ganti akun'}>{LOGIN_REQUIRED ? 'Keluar' : 'Ganti akun'}</button>
           </form>
         </div>
       </aside>

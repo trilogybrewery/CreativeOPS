@@ -1,11 +1,13 @@
 import { redirect } from 'next/navigation';
-import { loginAction } from '../actions';
-import { currentUser } from '@/lib/auth';
-import { APP_NAME } from '@/lib/config';
+import { loginAction, switchUserAction } from '../actions';
+import { currentUser, LOGIN_REQUIRED } from '@/lib/auth';
+import { APP_NAME, ROLES } from '@/lib/config';
+import { db, Row } from '@/lib/db';
 
 export const metadata = { title: 'Masuk' };
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ e?: string }> }) {
+  if (!LOGIN_REQUIRED) return <PickUser />;
   if (await currentUser()) redirect('/board');
   const { e } = await searchParams;
   return (
@@ -30,6 +32,34 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </label>
         <button className="btn pri block">Masuk</button>
       </form>
+    </main>
+  );
+}
+
+/* Mode tanpa login: pilih akun untuk mencoba alur tiap peran. */
+async function PickUser() {
+  const me = await currentUser();
+  const users = db().prepare('SELECT username, name, role FROM users WHERE active = 1 ORDER BY id').all() as Row[];
+  return (
+    <main className="login">
+      <div className="panel">
+        <div className="ws" style={{ padding: 0 }}>
+          <div className="ws-logo">CO</div>
+          <div>
+            <b>{APP_NAME}</b>
+            <span>Trilogy Artisan</span>
+          </div>
+        </div>
+        <p className="muted">Mode tanpa login. Pilih akun untuk masuk.</p>
+        {users.map((u) => (
+          <form key={u.username} action={switchUserAction}>
+            <input type="hidden" name="username" value={u.username} />
+            <button className={'btn block' + (me?.username === u.username ? ' pri' : '')}>
+              {u.name} · {ROLES[u.role] ?? u.role}
+            </button>
+          </form>
+        ))}
+      </div>
     </main>
   );
 }

@@ -4,6 +4,20 @@ import crypto from 'node:crypto';
 import { db, Row } from './db';
 
 const COOKIE = 'co_session';
+const AS_COOKIE = 'co_as';
+
+/*
+ * Mode tanpa login (sementara). Aktif kecuali env LOGIN_REQUIRED=true.
+ * Tanpa login, semua orang masuk sebagai Admin dan bisa ganti akun dari halaman /login
+ * tanpa password, supaya alur tiap peran tetap bisa dicoba. Akun disimpan di cookie
+ * (username), bukan di tabel sessions, jadi tetap jalan di server tanpa disk tetap.
+ */
+export const LOGIN_REQUIRED = process.env.LOGIN_REQUIRED === 'true';
+const USER_COLS = 'u.id, u.username, u.name, u.role, u.division, u.job, u.must_change, u.producer';
+
+export async function setActingUser(username: string) {
+  (await cookies()).set(AS_COOKIE, username, { httpOnly: true, sameSite: 'lax', path: '/', maxAge: DAYS * 86400 });
+}
 const DAYS = 30;
 
 export type User = {
@@ -35,9 +49,16 @@ export async function destroySession() {
   const token = jar.get(COOKIE)?.value;
   if (token) db().prepare('DELETE FROM sessions WHERE token = ?').run(sha(token));
   jar.delete(COOKIE);
+  jar.delete(AS_COOKIE);
 }
 
 export async function currentUser(): Promise<User | null> {
+  if (!LOGIN_REQUIRED) {
+    const as = (await cookies()).get(AS_COOKIE)?.value || 'admin';
+    const q = db().prepare(`SELECT ${USER_COLS} FROM users u WHERE u.username = ? AND u.active = 1`);
+    const r = (q.get(as) || q.get('admin')) as Row | undefined;
+    return r ? ({ ...(r as User), must_change: 0 }) : null;
+  }
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
   const r = db()
