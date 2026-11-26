@@ -40,7 +40,7 @@ Buka http://localhost:3000. Untuk mode pengembangan pakai `npm run dev`.
 
 ## Mode tanpa login (sementara)
 
-Saat ini login dimatikan. Semua orang langsung masuk sebagai Admin, dan bisa pindah ke akun lain (CD, AD, PIC, requester) lewat tombol **Ganti akun** tanpa password. Untuk menyalakan login lagi, isi variabel `LOGIN_REQUIRED=true` lalu jalankan ulang aplikasi.
+Saat ini login dimatikan. Saat pertama membuka aplikasi, pilih akun dulu (tanpa password). Pindah ke akun lain lewat tombol **Ganti akun**. Untuk menyalakan login lagi, isi variabel `LOGIN_REQUIRED=true` lalu jalankan ulang aplikasi.
 
 Di Vercel, database disimpan di `/tmp` dan **tidak permanen**: ticket, upload, dan perubahan bisa hilang kapan saja, dan tiap instance server bisa punya data berbeda. Pakai Vercel hanya untuk melihat-lihat. Untuk dipakai tim, jalankan di NAS.
 
