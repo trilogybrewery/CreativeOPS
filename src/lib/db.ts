@@ -115,15 +115,40 @@ function seed(d: Database.Database) {
     const brief = String(t.brief || '');
     const firstLine = brief.split('\n').map((s: string) => s.trim()).filter(Boolean)[0] || t.typeRaw || 'Tanpa judul';
     const title = firstLine.length > 90 ? firstLine.slice(0, 89) + '…' : firstLine;
-    const done = t.status === 'Selesai' ? 1 : 0;
+    // Semua histori tracker dianggap sudah selesai (dikonfirmasi tim, 26 Nov 2026).
+    // Ticket yang belum ditandai "Selesai" di tracker memakai deadline-nya sebagai tanggal selesai.
+    const done = 1;
     const created = (t.active || t.deadline || now.slice(0, 10)) + 'T10:00:00';
     insTicket.run(
       title, brief, divMap[t.div] || t.div || 'Brand', t.project || '', t.type || '', t.typeRaw || '',
-      t.qty || 0, t.actual, t.prio || '', t.deadline || '', done ? 8 : t.stage, done,
+      t.qty || 0, t.actual ?? t.qty ?? null, t.prio || '', t.deadline || '', done ? 8 : t.stage, done,
       ids[String(t.pic || '').toLowerCase()] || null, created,
       done ? (t.done || t.deadline || now.slice(0, 10)) : null, created
     );
   }
+}
+
+/*
+ * Penutupan massal satu kali (26 Nov 2026): semua ticket yang masih terbuka sebenarnya
+ * sudah selesai. Berlaku untuk database yang sudah ada (misalnya di NAS); ditandai di
+ * tabel settings supaya hanya jalan sekali dan tidak menutup ticket baru setelahnya.
+ */
+function closeAllOnce(d: Database.Database) {
+  const key = 'migr_close_all_20261126';
+  if (d.prepare('SELECT 1 FROM settings WHERE k = ?').get(key)) return;
+  const now = new Date().toISOString();
+  d.transaction(() => {
+    const open = d.prepare('SELECT id, deadline, qty, actual_qty FROM tickets WHERE done = 0').all() as Row[];
+    const up = d.prepare('UPDATE tickets SET done = 1, stage = 8, done_at = ?, actual_qty = ?, stage_due = NULL WHERE id = ?');
+    const ev = d.prepare("INSERT INTO events(ticket_id, user_id, kind, text, at) VALUES (?, NULL, 'done', 'Ditutup massal: sudah selesai', ?)");
+    for (const t of open) {
+      const doneAt = t.deadline && t.deadline < now.slice(0, 10) ? `${t.deadline}T10:00:00` : now;
+      up.run(doneAt, t.actual_qty ?? t.qty, t.id);
+      ev.run(t.id, now);
+    }
+    d.prepare('UPDATE stage_log SET left_at = ?, forward = 1 WHERE left_at IS NULL').run(now);
+    d.prepare('INSERT INTO settings(k, v) VALUES (?, ?)').run(key, String(open.length));
+  })();
 }
 
 export function db(): Database.Database {
@@ -135,6 +160,7 @@ export function db(): Database.Database {
   d.exec(SCHEMA);
   const n = d.prepare('SELECT COUNT(*) AS n FROM users').get() as Row;
   if (!n.n) d.transaction(() => seed(d))();
+  closeAllOnce(d);
   g.__coDb = d;
   return d;
 }
