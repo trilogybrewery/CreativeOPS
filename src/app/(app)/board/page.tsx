@@ -83,8 +83,11 @@ export default async function BoardPage({ searchParams }: { searchParams: Promis
             );
             if (stage === 5 && lanes.length) {
               const noPic = list.filter((t) => !t.pic_id);
+              // Lebar dikunci dari jumlah lajur. Safari menghitung lebar kolom dari isi kartu,
+              // sehingga kolom bisa jauh lebih lebar dari lajurnya dan menyisakan ruang kosong.
+              const nLanes = lanes.length + (noPic.length ? 1 : 0);
               return (
-                <section className="col wide" key={stage} aria-label={name}>
+                <section className="col wide" key={stage} aria-label={name} style={{ width: nLanes * 256 + (nLanes - 1) * 8 + 22 }}>
                   {head}
                   <div className="lanes">
                     {lanes.map((p: Row) => {
