@@ -1,0 +1,18 @@
+services:
+  creative-ops:
+    build: .
+    container_name: creative-ops
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      TZ: Asia/Jakarta
+      DATA_DIR: /data
+      INITIAL_PASSWORD: ganti-password-awal-ini
+      APP_URL: https://creative.domainkamu.com
+      ALLOWED_ORIGINS: creative.domainkamu.com
+      VAPID_SUBJECT: mailto:admin@domainkamu.com
+      MAX_UPLOAD_MB: "5120"
+    volumes:
+      # Kiri: folder di NAS. Database, backup, dan semua file ticket tersimpan di sini.
+      - /volume1/creative-ops:/data
