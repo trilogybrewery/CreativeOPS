@@ -102,6 +102,20 @@ export async function updateTicketAction(fd: FormData) {
     T.updateTicket(u, t, x);
   });
 }
+/** Drag & drop di Board: tidak redirect, mengembalikan pesan error kalau ditolak. */
+export async function moveTicketAction(id: number, stage: number, picId: number | null): Promise<{ error?: string }> {
+  const u = await requireUser();
+  const t = T.getTicket(Number(id));
+  if (!t || !T.canView(u, t)) return { error: 'Ticket tidak ditemukan.' };
+  try {
+    T.moveOnBoard(u, t, Number(stage), picId ? Number(picId) : null);
+  } catch (e) {
+    if (e instanceof T.Refused) return { error: e.message };
+    throw e;
+  }
+  revalidatePath('/', 'layout');
+  return {};
+}
 export async function advanceAction(fd: FormData) {
   await onTicket(fd, (u, t) => T.advance(u, t));
 }

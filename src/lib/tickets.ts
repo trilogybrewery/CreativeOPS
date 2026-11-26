@@ -366,3 +366,33 @@ export function projectNames(): string[] {
   return (db().prepare("SELECT project, COUNT(*) AS n FROM tickets WHERE project <> '' GROUP BY project ORDER BY n DESC").all() as Row[]).map((r) => r.project);
 }
 export { fmtDate };
+
+/**
+ * Drag & drop di Board. Tiap perpindahan diterjemahkan ke aksi workflow yang sudah ada,
+ * jadi hak akses, SLA, log, dan notifikasi tetap sama dengan tombol di halaman ticket.
+ * Perpindahan yang butuh isian (alasan, jenis revisi, approval) ditolak dengan petunjuk.
+ */
+export function moveOnBoard(u: User, t: Ticket, to: number, picId: number | null) {
+  need(!t.done, 'Ticket sudah selesai.');
+  need(u.role !== 'viewer', 'Viewer hanya bisa melihat.');
+  const from = t.stage;
+  if (from === to) {
+    need(to === 5 && picId && picId !== t.pic_id, 'Ticket sudah di tahap ini.');
+    need(t.type, 'Isi production type dulu di halaman ticket.');
+    return setup(u, t, { picId: picId!, type: t.type, qty: Number(t.qty) || 1, due: '', go: false });
+  }
+  if (to === from + 1 && from <= 3) return advance(u, t);
+  if (from === 3 && to === 2) return backToAlignment(u, t);
+  if (from === 4 && to === 5) {
+    const pic = picId || t.pic_id;
+    need(pic, 'Taruh ticket di lajur PIC yang dituju.');
+    need(t.type, 'Isi production type dulu di halaman ticket (Production Setup).');
+    return setup(u, t, { picId: pic, type: t.type, qty: Number(t.qty) || 1, due: '', go: true });
+  }
+  if (from === 5 && to === 6) return submitToQC(u, t);
+  if (from === 6 && to === 7) return qcPass(u, t);
+  if (from === 7 && to === 8) throw new Refused('Final Approval lanjut otomatis setelah CD dan Brand approve dan file FA di-upload. Buka ticket untuk approve.');
+  if (from <= 3 && to < from) throw new Refused('Untuk mengembalikan ke requester, buka ticket dan isi alasannya.');
+  if ((from === 6 || from === 7) && to < from) throw new Refused('Revisi butuh jenis revisi. Buka ticket lalu pilih Minta revisi.');
+  throw new Refused(`Ticket tidak bisa dipindah dari tahap ${from} ke tahap ${to}. Tahap tidak boleh dilompati.`);
+}

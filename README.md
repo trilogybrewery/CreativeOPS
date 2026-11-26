@@ -18,6 +18,7 @@ Aplikasi web untuk workflow tim creative: ticket, board 8 tahap, upload file, SL
 | Jam kerja | Senin–Jumat 10.00–19.00, zona waktu Asia/Jakarta. |
 | Ideal jam | 8 jam × 90% per orang per hari kerja. |
 | Dashboard dan report | Hanya untuk Admin, CD, AD, dan Viewer. |
+| Drag & drop di Board | Kartu bisa diseret ke tahap berikutnya atau ke lajur PIC. Aturannya sama dengan tombol di halaman ticket: tahap tidak bisa dilompati, dan tiap tahap hanya bisa dipindah pemegangnya. Mengembalikan ke requester, revisi, dan approval tetap lewat halaman ticket karena butuh isian. |
 | Histori | 257 ticket dari TRACKER_CREATIVE_2026 diimpor otomatis saat pertama kali jalan. |
 
 Semua angka aturan di atas ada di `src/lib/config.ts`. Ubah di sana, lalu build ulang.
