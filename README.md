@@ -36,7 +36,7 @@ Buka http://localhost:3000. Untuk mode pengembangan pakai `npm run dev`.
 
 ## Akun awal
 
-Dibuat otomatis saat database masih kosong. Password awal semuanya `trilogy-2026` (bisa diganti lewat variabel `INITIAL_PASSWORD` sebelum pertama kali dijalankan). Tiap akun wajib ganti password saat login pertama.
+Dibuat otomatis saat database masih kosong. Password awal semuanya `trilogy-2026`, kecuali kalau dijalankan lewat `docker-compose.yml`: di sana password awalnya nilai `INITIAL_PASSWORD` di file itu (bisa diganti lewat variabel `INITIAL_PASSWORD` sebelum pertama kali dijalankan). Tiap akun wajib ganti password saat login pertama.
 
 | Username | Peran |
 |---|---|
@@ -82,7 +82,7 @@ Push notif dan pemasangan ke layar HP hanya jalan lewat HTTPS, jadi langkah ini 
 1. Buat subdomain, misalnya `creative.domainkamu.com`, yang mengarah ke NAS. Caranya tergantung jaringan kantor: reverse proxy bawaan NAS dengan sertifikat HTTPS, atau layanan tunnel supaya tidak perlu membuka port router.
 2. Arahkan subdomain itu ke port 3000 container.
 3. Pastikan reverse proxy meneruskan header `Host` dan `X-Forwarded-Proto`, dan batas ukuran upload-nya dinaikkan (file video dan file mentah bisa beberapa GB).
-4. Isi `APP_URL` dan `ALLOWED_ORIGINS` dengan subdomain itu, lalu jalankan ulang container.
+4. Isi `APP_URL` dan `ALLOWED_ORIGINS` dengan subdomain itu, lalu jalankan ulang container. Kalau dua-duanya kosong atau salah, login lewat subdomain akan gagal dan halaman kembali ke form login tanpa pesan. Nilainya dibaca saat container jalan, jadi tidak perlu build ulang setelah mengubahnya.
 
 ## Push notif
 

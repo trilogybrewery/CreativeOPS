@@ -8,7 +8,7 @@ const nextConfig = {
   serverExternalPackages: ['better-sqlite3', 'web-push'],
   experimental: {
     serverActions: {
-      // Isi ALLOWED_ORIGINS kalau aplikasi dibuka lewat reverse proxy / subdomain.
+      // Nilai ini hanya terbaca saat build. Untuk runtime (Docker) lihat src/proxy.ts.
       allowedOrigins: allowed,
     },
   },
