@@ -6,7 +6,10 @@ Aplikasi web untuk workflow tim creative: ticket, board 8 tahap, upload file, SL
 
 | Aturan | Isi |
 |---|---|
-| Tahap 1–3 (Request, Alignment, Creative Brief) | Teritori CD. CD yang meneruskan ticket, atau mengembalikannya ke requester dengan alasan. |
+| Tahap 1 (Request) | Dipegang CD dan requester divisi ticket itu (Brand, Sales, Digital Marketing). Mereka yang meneruskan ticket ke Alignment. |
+| Tahap 2 (Alignment) | Dipegang CD dan Brand. |
+| Tahap 3 (Creative Brief) | Dipegang CD dan AD. Bisa diteruskan ke Production Setup atau dibalikkan ke Alignment. |
+| Mengembalikan ke requester | Dari tahap 1–3, oleh pemegang tahap itu selain requester. Permintaan urgent tetap diputuskan CD. |
 | Tahap 4 (Production Setup) | Teritori AD. AD memilih PIC, production type, dan jumlah. |
 | Tahap 5 (Production) | PIC hanya melihat ticket miliknya. Upload preview, lalu submit ke QC. |
 | Tahap 6 (QC & Revision) | AD memutuskan lolos atau revisi. Empat jenis revisi: Brand issue, Creative issue, Brand alignment issue, Technical issue. |

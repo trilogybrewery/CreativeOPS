@@ -20,9 +20,9 @@ export const STAGE_COLORS = ['#6b7280', '#8b5cf6', '#3b82f6', '#0ea5e9', '#f59e0
 
 // Siapa pemegang tiap tahap (yang punya tombol untuk meneruskan ticket).
 export const STAGE_OWNER_LABEL = [
-  'CD',
-  'CD',
-  'CD',
+  'CD, Brand, Sales, Digital',
+  'CD + Brand',
+  'CD + AD',
   'AD',
   'PIC',
   'AD',

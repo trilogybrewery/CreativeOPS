@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import * as A from '../../../actions';
 import { requireUser, User } from '@/lib/auth';
 import { db, Row } from '@/lib/db';
-import { ISSUES, PRIORITIES, RETURN_REASONS, SLA, STAGES, STAGE_COLORS } from '@/lib/config';
+import { ISSUES, PRIORITIES, RETURN_REASONS, SLA, STAGES, STAGE_COLORS, STAGE_OWNER_LABEL } from '@/lib/config';
 import * as T from '@/lib/tickets';
 import { CATEGORY_LABEL, fmtSize, kindOf } from '@/lib/files';
 import { daysLate, fmtDate, fmtDateTime, today } from '@/lib/time';
@@ -105,6 +105,8 @@ function Actions({ u, t, files }: { u: User; t: Row; files: Row[] }) {
   const hasPreview = files.some((f) => f.category === 'preview' && f.round === round);
   const hasFa = files.some((f) => f.category === 'fa');
   const wait = (who: string) => <p className="muted">Menunggu {who}.</p>;
+  const holds = T.holdsStage(u, t);
+  const owner = STAGE_OWNER_LABEL[t.stage - 1];
 
   if (t.done) return <div className="alert good">Selesai dan published pada {fmtDateTime(t.done_at)}.</div>;
   if (u.role === 'viewer') return wait('pemegang tahap ini');
@@ -138,21 +140,21 @@ function Actions({ u, t, files }: { u: User; t: Row; files: Row[] }) {
         </div>
       );
     }
-    if (!isCD) return wait('CD menerima request ini');
+    if (!holds) return wait(`${owner} meneruskan request ini`);
     return (
       <div className="row" style={{ alignItems: 'flex-start' }}>
         <form action={A.advanceAction}><Id t={t} /><button className="btn pri">Terima → Alignment</button></form>
-        <ReturnForm t={t} />
+        {u.role !== 'requester' ? <ReturnForm t={t} /> : null}
       </div>
     );
   }
   if (t.stage === 2 || t.stage === 3) {
-    if (!isCD) return wait(t.stage === 2 ? 'CD menyelesaikan Alignment' : 'CD menyelesaikan Creative Brief');
+    if (!holds) return wait(`${owner} menyelesaikan ${t.stage === 2 ? 'Alignment' : 'Creative Brief'}`);
     return (
       <div className="row" style={{ alignItems: 'flex-start' }}>
         <form action={A.advanceAction}><Id t={t} /><button className="btn pri">{t.stage === 2 ? 'Lanjut → Creative Brief' : 'Assign ke Production Setup →'}</button></form>
         {t.stage === 3 ? <form action={A.backToAlignmentAction}><Id t={t} /><button className="btn">← Balik ke Alignment</button></form> : null}
-        <ReturnForm t={t} />
+        {u.role !== 'requester' ? <ReturnForm t={t} /> : null}
       </div>
     );
   }

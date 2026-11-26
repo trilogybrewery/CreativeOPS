@@ -1,5 +1,5 @@
 import { db, Row } from './db';
-import { ISSUES, SLA, STAGES } from './config';
+import { ISSUES, SLA, STAGES, STAGE_OWNER_LABEL } from './config';
 import { addWorkHours, standardDue, requestCutoff, mondayOf, nextMonday, ymd, parseYmd, fmtDateTime, fmtDate } from './time';
 import { notify } from './notify';
 import type { User } from './auth';
@@ -29,6 +29,19 @@ export const isStaff = (u: User) => u.role === 'admin' || u.role === 'cd' || u.r
 export const isBrand = (u: User) => u.role === 'requester' && u.division === 'Brand';
 export const seesAll = (u: User) => isStaff(u) || u.role === 'viewer' || isBrand(u);
 export const seesReports = (u: User) => isStaff(u) || u.role === 'viewer';
+/**
+ * Pemegang tahap 1–3 (boleh meneruskan ticket):
+ * 1 Request: CD + requester divisi ticket itu (Brand, Sales, Digital Marketing)
+ * 2 Alignment: CD + Brand
+ * 3 Creative Brief: CD + AD
+ */
+export function holdsStage(u: User, t: Ticket, stage = t.stage) {
+  if (u.role === 'admin' || u.role === 'cd') return stage >= 1 && stage <= 3;
+  if (stage === 1) return u.role === 'requester' && u.division === t.division;
+  if (stage === 2) return isBrand(u);
+  if (stage === 3) return u.role === 'ad';
+  return false;
+}
 export const canCreate = (u: User) => u.role === 'requester' || u.role === 'cd' || u.role === 'admin';
 
 export function visibility(u: User): { where: string; params: any[] } {
@@ -61,7 +74,9 @@ export function requesterIds(t: Ticket): number[] {
   return idsWhere("role = 'requester' AND division = ?", t.division);
 }
 export function ownersOf(t: Ticket, stage: number): number[] {
-  if (stage <= 3) return cdIds();
+  if (stage === 1) return [...cdIds(), ...requesterIds(t)];
+  if (stage === 2) return [...cdIds(), ...brandIds()];
+  if (stage === 3) return [...cdIds(), ...adIds()];
   if (stage === 4 || stage === 6) return adIds();
   if (stage === 5) return t.pic_id ? [t.pic_id] : adIds();
   if (stage === 7) return [...cdIds(), ...brandIds()];
@@ -197,23 +212,24 @@ export function decideUrgent(u: User, t: Ticket, approve: boolean) {
 
 /** CD meneruskan ticket di tahap 1–3. */
 export function advance(u: User, t: Ticket) {
-  need(u.role === 'cd' || u.role === 'admin', 'Tahap ini teritori CD.');
   need(t.stage >= 1 && t.stage <= 3 && !t.done, 'Ticket tidak berada di tahap 1–3.');
+  need(holdsStage(u, t), `Tahap ini dipegang ${STAGE_OWNER_LABEL[t.stage - 1]}.`);
   need(!t.returned, 'Ticket sedang dikembalikan ke requester. Tunggu dikirim ulang.');
   need(t.urgent !== 'pending', 'Putuskan dulu permintaan urgent-nya.');
   const next = t.stage + 1;
   enterStage(t, next, u);
-  if (next === 2) notify([...adIds(), ...requesterIds(t)], `Masuk Alignment: ${label(t)}`, t.id);
-  if (next === 3) notify(adIds(), `Masuk Creative Brief: ${label(t)}`, t.id);
-  if (next === 4) notify(adIds(), `Siap Production Setup, assign PIC-nya: ${label(t)}`, t.id);
+  const to = (ids: number[]) => [...new Set(ids)].filter((id) => id !== u.id);
+  if (next === 2) notify(to([...ownersOf(t, 2), ...requesterIds(t)]), `Masuk Alignment: ${label(t)}`, t.id);
+  if (next === 3) notify(to(ownersOf(t, 3)), `Masuk Creative Brief: ${label(t)}`, t.id);
+  if (next === 4) notify(to(adIds()), `Siap Production Setup, assign PIC-nya: ${label(t)}`, t.id);
 }
 export function backToAlignment(u: User, t: Ticket) {
-  need(u.role === 'cd' || u.role === 'admin', 'Tahap ini teritori CD.');
   need(t.stage === 3, 'Hanya dari Creative Brief.');
+  need(holdsStage(u, t), `Tahap ini dipegang ${STAGE_OWNER_LABEL[2]}.`);
   enterStage(t, 2, u, { forward: false });
 }
 export function returnToRequester(u: User, t: Ticket, reason: string) {
-  need(u.role === 'cd' || u.role === 'admin', 'Tahap ini teritori CD.');
+  need(holdsStage(u, t) && u.role !== 'requester', 'Hanya pemegang tahap ini (selain requester) yang bisa mengembalikan request.');
   need(t.stage <= 3 && !t.done, 'Hanya bisa dikembalikan dari tahap 1–3.');
   need(reason.trim(), 'Alasan wajib diisi.');
   db().prepare('UPDATE tickets SET returned = 1, return_reason = ? WHERE id = ?').run(reason.trim(), t.id);
