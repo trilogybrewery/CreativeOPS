@@ -7,7 +7,14 @@ export const metadata: Metadata = {
   title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
   description: 'Workflow, ticket, dan report tim creative Trilogy Artisan.',
   appleWebApp: { capable: true, title: APP_NAME, statusBarStyle: 'default' },
-  icons: { icon: '/icon-192.png', apple: '/icon-192.png' },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: '/apple-icon.png',
+  },
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#1f2328' };
 
